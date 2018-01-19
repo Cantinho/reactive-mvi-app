@@ -1,5 +1,6 @@
-package br.com.cantinho.reactivemvi;
+package br.com.cantinho.reactivemvi.businesslogic.interactor.search;
 
+import br.com.cantinho.reactivemvi.businesslogic.model.Product;
 import java.util.List;
 
 /**
