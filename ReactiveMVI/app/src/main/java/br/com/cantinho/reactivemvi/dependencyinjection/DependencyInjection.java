@@ -19,6 +19,13 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
  */
 public class DependencyInjection {
 
+  public static String BASE_URL = "https://raw.githubusercontent.com";
+  public static final String BASE_URL_BRANCH = "master";
+  public static final String BASE_IMAGE_URL = BASE_URL
+      + "/sockeqwe/mosby/"
+      + DependencyInjection.BASE_URL_BRANCH
+      + "/sample-mvi/server/images/";
+
   // Don't do this in your real app
   private final PublishSubject<Boolean> clearSelectionRelay = PublishSubject.create();
   private final PublishSubject<Boolean> deleteSelectionRelay = PublishSubject.create();
