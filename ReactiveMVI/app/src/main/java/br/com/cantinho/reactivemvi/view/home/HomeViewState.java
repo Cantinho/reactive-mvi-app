@@ -244,10 +244,16 @@ public final class HomeViewState {
       return this;
     }
 
+    public Builder pullToRefreshError(final Throwable error) {
+      this.pullToRefreshError = error;
+      return this;
+    }
+
     public HomeViewState build() {
       return new HomeViewState(data, loadingFirstPage, firstPageError, loadingNextPage,
           nextPageError, loadingPullToRefresh, pullToRefreshError);
     }
+
 
 
   }
