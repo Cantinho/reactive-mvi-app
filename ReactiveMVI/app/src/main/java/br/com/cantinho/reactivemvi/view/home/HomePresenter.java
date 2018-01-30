@@ -4,6 +4,7 @@ import android.support.v4.util.Pair;
 import br.com.cantinho.reactivemvi.businesslogic.feed.HomeFeedLoader;
 import br.com.cantinho.reactivemvi.businesslogic.model.AdditionalItemsLoadable;
 import br.com.cantinho.reactivemvi.businesslogic.model.FeedItem;
+import br.com.cantinho.reactivemvi.businesslogic.model.SectionHeader;
 import br.com.cantinho.reactivemvi.view.home.PartialStateChanges.PullToRefreshLoading;
 import com.hannesdorfmann.mosby3.mvi.MviBasePresenter;
 import io.reactivex.Observable;
@@ -124,10 +125,110 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
           .build();
     }
 
-    //TODO implement this.
-    //TODO remove null return.
-    return null;
+    if(partialChanges instanceof PartialStateChanges.PullToRefreshLoading) {
+      return previousState.builder().pullToRefreshLoading(true).pullToRefreshError(null).build();
+    }
 
+    if(partialChanges instanceof PartialStateChanges.PullToRefreshLoadingError) {
+      return previousState.builder()
+          .pullToRefreshLoading(false)
+          .pullToRefreshError(((PartialStateChanges.PullToRefreshLoadingError) partialChanges).getError())
+          .build();
+    }
+
+    if(partialChanges instanceof PartialStateChanges.ProductsOfCategoryLoading) {
+      Pair<Integer, AdditionalItemsLoadable> found = findAdditionalItems(((PartialStateChanges
+          .ProductsOfCategoryLoading) partialChanges).getCategoryName(), previousState.getData());
+
+      AdditionalItemsLoadable foundItem = found.second;
+      AdditionalItemsLoadable toInsert =
+          new AdditionalItemsLoadable(foundItem.getMoreItemsAvailableCount(),
+              foundItem.getGroupName(), true, null);
+
+      List<FeedItem> data = new ArrayList<>(previousState.getData().size());
+      data.addAll(previousState.getData());
+      data.set(found.first, toInsert);
+
+      return previousState.builder().data(data).build();
+    }
+
+    if(partialChanges instanceof PartialStateChanges.ProductsOfCategoryLoadingError) {
+      Pair<Integer, AdditionalItemsLoadable> found = findAdditionalItems(
+          ((PartialStateChanges.ProductsOfCategoryLoadingError) partialChanges).getCategoryName(),
+          previousState.getData());
+
+      AdditionalItemsLoadable foundItem = found.second;
+      AdditionalItemsLoadable toInsert =
+          new AdditionalItemsLoadable(foundItem.getMoreItemsAvailableCount(),
+              foundItem.getGroupName(), false,
+              ((PartialStateChanges.ProductsOfCategoryLoadingError) partialChanges).getError());
+
+      List<FeedItem> data = new ArrayList<>(previousState.getData().size());
+      data.addAll(previousState.getData());
+      data.set(found.first, toInsert);
+
+      return previousState.builder().data(data).build();
+    }
+
+    if(partialChanges instanceof PartialStateChanges.ProductsOfCategoryLoaded) {
+      Pair<Integer, AdditionalItemsLoadable> found = findAdditionalItems(
+          ((PartialStateChanges.ProductsOfCategoryLoaded) partialChanges).getCategoryName(),
+          previousState.getData());
+
+      List<FeedItem> data = new ArrayList<>(previousState.getData().size()
+        + ((PartialStateChanges.ProductsOfCategoryLoaded) partialChanges).getData().size());
+      data.addAll(previousState.getData());
+
+      // Search for the section header
+      int sectionHeaderIndex = -1;
+      for (int i = found.first; i >= 0; i--) {
+        FeedItem item = previousState.getData().get(i);
+        if(item instanceof SectionHeader && ((SectionHeader) item).getName()
+            .equals(
+                ((PartialStateChanges.ProductsOfCategoryLoaded) partialChanges).getCategoryName()
+            )) {
+          sectionHeaderIndex = i;
+          break;
+        }
+        // Remove all items of that category. The new list of products will be added afterwards
+        data.remove(i);
+      }
+
+      if(sectionHeaderIndex < 0) {
+        throw new RuntimeException("Couldn't find the section header for category "
+          + ((PartialStateChanges.ProductsOfCategoryLoaded) partialChanges).getCategoryName());
+      }
+      data.addAll(sectionHeaderIndex + 1, ((PartialStateChanges.ProductsOfCategoryLoaded)
+          partialChanges).getData());
+
+      return previousState.builder().data(data).build();
+    }
+
+    throw new IllegalStateException("Don't know how to reduce the partial state " + partialChanges);
+  }
+
+  /**
+   * Finds the @{@link AdditionalItemsLoadable} for the given category name.
+   *
+   * @param categoryName The name of the category.
+   * @param items The list of feeditems.
+   * @return
+   */
+  private Pair<Integer, AdditionalItemsLoadable> findAdditionalItems(final String categoryName,
+      final List<FeedItem> items) {
+    int size = items.size();
+    for(int i = 0; i < size; i++) {
+      FeedItem item = items.get(i);
+      if(item instanceof AdditionalItemsLoadable
+          && ((AdditionalItemsLoadable) item).getGroupName().equals(categoryName)) {
+        return Pair.create(i, (AdditionalItemsLoadable) item);
+      }
+    }
+
+    throw new RuntimeException("No "
+    + AdditionalItemsLoadable.class.getSimpleName()
+    + " has been found for category = "
+    + categoryName);
   }
 
 
