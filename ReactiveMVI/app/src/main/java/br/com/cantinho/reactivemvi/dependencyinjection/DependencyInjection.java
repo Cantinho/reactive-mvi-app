@@ -9,6 +9,7 @@ import br.com.cantinho.reactivemvi.businesslogic.http.ProductBackendApiDecorator
 import br.com.cantinho.reactivemvi.businesslogic.interactor.search.SearchInteractor;
 import br.com.cantinho.reactivemvi.businesslogic.searchengine.SearchEngine;
 import br.com.cantinho.reactivemvi.view.home.HomePresenter;
+import br.com.cantinho.reactivemvi.view.search.SearchPresenter;
 import com.squareup.moshi.Moshi;
 import io.reactivex.subjects.PublishSubject;
 import retrofit2.Retrofit;
@@ -62,6 +63,10 @@ public class DependencyInjection {
 
   HomeFeedLoader newHomeFeedLoader() {
     return new HomeFeedLoader(newGroupedPagedFeedLoader(), backendApiDecorator);
+  }
+
+  public SearchPresenter newSearchPresenter() {
+    return new SearchPresenter(newSearchInteractor());
   }
 
   public HomePresenter newHomePresenter() {

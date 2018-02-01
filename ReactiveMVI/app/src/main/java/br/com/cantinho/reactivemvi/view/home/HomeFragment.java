@@ -19,6 +19,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import com.hannesdorfmann.mosby3.mvi.MviFragment;
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import io.reactivex.Observable;
 import timber.log.Timber;
 
@@ -61,8 +62,8 @@ public class HomeFragment extends MviFragment<HomeView, HomePresenter> implement
   }
 
   @Nullable @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable
-      Bundle savedInstanceState) {
+  public View onCreateView(final LayoutInflater inflater, final @Nullable ViewGroup container,
+      final @Nullable Bundle savedInstanceState) {
 
     View view = inflater.inflate(R.layout.fragment_home, container, false);
     unbinder = ButterKnife.bind(this, view);
@@ -88,13 +89,24 @@ public class HomeFragment extends MviFragment<HomeView, HomePresenter> implement
   }
 
   @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    unbinder.unbind();
+  }
+
+  @Override
   public Observable<Boolean> loadFirstPageIntent() {
-    return null;
+    return Observable.just(true).doOnComplete(() -> Timber.d("firstPage completed"));
   }
 
   @Override
   public Observable<Boolean> loadNextPageIntent() {
-    return null;
+    return RxRecyclerView.scrollStateChanges(recyclerView)
+        .filter(event -> !adapter.isLoadingNextPage())
+        .filter(event -> event == RecyclerView.SCROLL_STATE_IDLE)
+        .filter(event -> layoutManager.findLastCompletelyVisibleItemPosition()
+          == adapter.getItems().size() - 1)
+        .map(integer -> true);
   }
 
   @Override
