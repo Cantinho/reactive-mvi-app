@@ -83,35 +83,52 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
   private HomeViewState viewStateReducer(final HomeViewState previousState,
       final PartialStateChanges partialChanges) {
 
+    /*
+     * Show progress bar and don't show error view.
+     */
     if(partialChanges instanceof PartialStateChanges.FirstPageLoading) {
       return previousState.builder().firstPageLoading(true).firstPageError(null).build();
     }
 
+    /*
+     * Hide progress bar and show error view.
+     */
     if(partialChanges instanceof PartialStateChanges.FirstPageError) {
       return previousState.builder().firstPageLoading(false)
           .firstPageError(((PartialStateChanges.FirstPageError) partialChanges).getError())
           .build();
     }
 
+    /*
+     * Hide progress bar, don't show error view. Update data.
+     */
     if(partialChanges instanceof PartialStateChanges.FirstPageLoaded) {
-      return previousState.builder().firstPageLoading(false)
-          .firstPageError(null)
+      return previousState.builder().firstPageLoading(false).firstPageError(null)
           .data(((PartialStateChanges.FirstPageLoaded) partialChanges).getData())
           .build();
     }
 
+    /*
+     * Show progress bar, don't show error view.
+     */
     if(partialChanges instanceof PartialStateChanges.NextPageLoading) {
       return previousState.builder().nextPageLoading(true)
           .nextPageError(null)
           .build();
     }
 
+    /*
+     * Hide progress bar, show error view.
+     */
     if(partialChanges instanceof PartialStateChanges.NextPageLoadingError) {
       return previousState.builder().nextPageLoading(false)
           .nextPageError(((PartialStateChanges.NextPageLoadingError) partialChanges).getError())
           .build();
     }
 
+    /*
+     * Hide pull to refresh indicator, don't show error view. Update data.
+     */
     if(partialChanges instanceof PartialStateChanges.NextPageLoaded) {
       List<FeedItem> data = new ArrayList<>(previousState.getData().size()
       + ((PartialStateChanges.PullToRefreshLoaded) partialChanges).getData().size());
@@ -125,10 +142,16 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
           .build();
     }
 
+    /*
+     * Show pull to refresh indicator, don't show error view.
+     */
     if(partialChanges instanceof PartialStateChanges.PullToRefreshLoading) {
       return previousState.builder().pullToRefreshLoading(true).pullToRefreshError(null).build();
     }
 
+    /*
+     * Hide pull to refresh indicator, show pull to refresh error view.
+     */
     if(partialChanges instanceof PartialStateChanges.PullToRefreshLoadingError) {
       return previousState.builder()
           .pullToRefreshLoading(false)
@@ -136,6 +159,9 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
           .build();
     }
 
+    /*
+     *
+     */
     if(partialChanges instanceof PartialStateChanges.ProductsOfCategoryLoading) {
       Pair<Integer, AdditionalItemsLoadable> found = findAdditionalItems(((PartialStateChanges
           .ProductsOfCategoryLoading) partialChanges).getCategoryName(), previousState.getData());
@@ -146,8 +172,8 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
               foundItem.getGroupName(), true, null);
 
       List<FeedItem> data = new ArrayList<>(previousState.getData().size());
-      data.addAll(previousState.getData());
-      data.set(found.first, toInsert);
+      data.addAll(previousState.getData()); // insert previous data on top of the list.
+      data.set(found.first, toInsert); //
 
       return previousState.builder().data(data).build();
     }
@@ -164,8 +190,8 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
               ((PartialStateChanges.ProductsOfCategoryLoadingError) partialChanges).getError());
 
       List<FeedItem> data = new ArrayList<>(previousState.getData().size());
-      data.addAll(previousState.getData());
-      data.set(found.first, toInsert);
+      data.addAll(previousState.getData()); // insert previous data on top of the list.
+      data.set(found.first, toInsert); // Will display an error / retry button.
 
       return previousState.builder().data(data).build();
     }
@@ -198,6 +224,7 @@ public class HomePresenter extends MviBasePresenter<HomeView, HomeViewState> {
         throw new RuntimeException("Couldn't find the section header for category "
           + ((PartialStateChanges.ProductsOfCategoryLoaded) partialChanges).getCategoryName());
       }
+      // Adds all items of the category (includes the items previously removed).
       data.addAll(sectionHeaderIndex + 1, ((PartialStateChanges.ProductsOfCategoryLoaded)
           partialChanges).getData());
 

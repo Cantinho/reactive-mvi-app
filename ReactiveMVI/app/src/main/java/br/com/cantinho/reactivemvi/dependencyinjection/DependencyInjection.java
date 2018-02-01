@@ -1,10 +1,15 @@
 package br.com.cantinho.reactivemvi.dependencyinjection;
 
 
+import br.com.cantinho.reactivemvi.businesslogic.feed.GroupedPagedFeedLoader;
+import br.com.cantinho.reactivemvi.businesslogic.feed.HomeFeedLoader;
+import br.com.cantinho.reactivemvi.businesslogic.feed.PagingFeedLoader;
 import br.com.cantinho.reactivemvi.businesslogic.http.ProductBackendApi;
 import br.com.cantinho.reactivemvi.businesslogic.http.ProductBackendApiDecorator;
 import br.com.cantinho.reactivemvi.businesslogic.interactor.search.SearchInteractor;
 import br.com.cantinho.reactivemvi.businesslogic.searchengine.SearchEngine;
+import br.com.cantinho.reactivemvi.view.home.HomePresenter;
+import br.com.cantinho.reactivemvi.view.search.SearchPresenter;
 import com.squareup.moshi.Moshi;
 import io.reactivex.subjects.PublishSubject;
 import retrofit2.Retrofit;
@@ -48,5 +53,24 @@ public class DependencyInjection {
     return new SearchInteractor(newSearchEngine());
   }
 
+  PagingFeedLoader newPagingFeedLoader() {
+    return new PagingFeedLoader(backendApiDecorator);
+  }
+
+  GroupedPagedFeedLoader newGroupedPagedFeedLoader() {
+    return new GroupedPagedFeedLoader(newPagingFeedLoader());
+  }
+
+  HomeFeedLoader newHomeFeedLoader() {
+    return new HomeFeedLoader(newGroupedPagedFeedLoader(), backendApiDecorator);
+  }
+
+  public SearchPresenter newSearchPresenter() {
+    return new SearchPresenter(newSearchInteractor());
+  }
+
+  public HomePresenter newHomePresenter() {
+    return new HomePresenter(newHomeFeedLoader());
+  }
 
 }

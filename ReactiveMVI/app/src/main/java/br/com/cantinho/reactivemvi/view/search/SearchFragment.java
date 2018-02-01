@@ -3,15 +3,15 @@ package br.com.cantinho.reactivemvi.view.search;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.transition.TransitionManager;
+import android.support.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import br.com.cantinho.reactivemvi.R;
+import br.com.cantinho.reactivemvi.SampleApplication;
 import br.com.cantinho.reactivemvi.businesslogic.interactor.search.SearchViewState;
 import br.com.cantinho.reactivemvi.businesslogic.model.Product;
 import br.com.cantinho.reactivemvi.view.ui.GridSpacingItemDecoration;
@@ -34,13 +34,20 @@ import timber.log.Timber;
 public class SearchFragment extends MviFragment<SearchView, SearchPresenter> implements
     SearchView, ProductClickedListener {
 
-  @BindView(R.id.searchView) android.widget.SearchView searchView;
-  @BindView(R.id.container) ViewGroup container;
-  @BindView(R.id.loadingView) View loadingView;
-  @BindView(R.id.errorView) TextView errorView;
-  @BindView(R.id.recyclerView) RecyclerView recyclerView;
-  @BindView(R.id.emptyView) View emptyView;
-  @BindInt(R.integer.grid_span_size) int spanCount;
+  @BindView(R.id.searchView)
+  android.widget.SearchView searchView;
+  @BindView(R.id.container)
+  ViewGroup container;
+  @BindView(R.id.loadingView)
+  View loadingView;
+  @BindView(R.id.errorView)
+  TextView errorView;
+  @BindView(R.id.recyclerView)
+  RecyclerView recyclerView;
+  @BindView(R.id.emptyView)
+  View emptyView;
+  @BindInt(R.integer.grid_span_size)
+  int spanCount;
 
   private SearchAdapter adapter;
   private Unbinder unbinder;
@@ -62,25 +69,46 @@ public class SearchFragment extends MviFragment<SearchView, SearchPresenter> imp
   }
 
   @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    unbinder.unbind();
+  }
+
+  @Override
+  public void onProductClicked(Product product) {
+    //TODO implement this.
+    //ProductDetailsActivity.start(getActivity(), product);
+  }
+
+  @NonNull
+  @Override
+  public SearchPresenter createPresenter() {
+    Timber.d("createPresenter");
+    return SampleApplication.getDependencyInjection(getActivity()).newSearchPresenter();
+  }
+
+  @Override
   public Observable<String> searchIntent() {
     return RxSearchView.queryTextChanges(searchView)
         .skip(2) // Because after screen orientation changes query Text will be resubmitted again.
         .filter(queryString -> queryString.length() > 3 || queryString.length() == 0)
-        .debounce(500, TimeUnit.MILLISECONDS).map(CharSequence::toString);
+        .debounce(500, TimeUnit.MILLISECONDS)
+        .distinctUntilChanged()
+        .map(CharSequence::toString);
   }
 
   @Override
   public void render(SearchViewState viewState) {
     Timber.d("render %s", viewState);
-    if( viewState instanceof SearchViewState.SearchNotStartedYet) {
+    if (viewState instanceof SearchViewState.SearchNotStartedYet) {
       renderSearchNotStarted();
-    } else if(viewState instanceof SearchViewState.Loading) {
+    } else if (viewState instanceof SearchViewState.Loading) {
       renderLoading();
-    } else if(viewState instanceof SearchViewState.SearchResult) {
+    } else if (viewState instanceof SearchViewState.SearchResult) {
       renderResult(((SearchViewState.SearchResult) viewState).getResult());
-    } else if(viewState instanceof SearchViewState.EmptyResult) {
+    } else if (viewState instanceof SearchViewState.EmptyResult) {
       renderEmptyResult();
-    } else if(viewState instanceof SearchViewState.ErrorResult) {
+    } else if (viewState instanceof SearchViewState.ErrorResult) {
       Timber.e(((SearchViewState.ErrorResult) viewState).getError());
       renderError();
     } else {
@@ -130,15 +158,4 @@ public class SearchFragment extends MviFragment<SearchView, SearchPresenter> imp
     emptyView.setVisibility(View.VISIBLE);
   }
 
-
-  @Override
-  public void onProductClicked(Product product) {
-
-  }
-
-  @NonNull
-  @Override
-  public SearchPresenter createPresenter() {
-    return null;
-  }
 }
